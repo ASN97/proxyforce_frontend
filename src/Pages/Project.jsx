@@ -9,10 +9,19 @@ const ProjectPage = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch("http://localhost:8000/projects");
+        const res = await fetch("http://localhost:8000/projects/all");
         if (!res.ok) throw new Error("Failed to fetch projects");
         const data = await res.json();
-        setProjects(data);
+        //setProjects(data);
+        setProjects(Object.entries(data.projects).map(([id, p]) => ({
+          id,
+          title: p.project_name,
+          description: p.description,
+          due: p.deadline,
+          members: p.team_members?.length || 0,
+          progress: 40 // or compute from milestones later
+        })));
+        
       } catch (err) {
         console.error(err);
         // fallback: show an empty array or error message

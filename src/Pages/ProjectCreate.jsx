@@ -84,7 +84,7 @@ const ProjectCreateSinglePage = () => {
         name: m.name,
         email: m.email,
         skills: m.skills.split(',').map(s => s.trim()).filter(Boolean),
-        hours_per_week: parseInt(m.hoursPerWeek),
+        working_hours_per_week: parseInt(m.hoursPerWeek),
         hourly_wage: parseFloat(m.hourlyWage)
       })),
       stakeholders: formData.stakeholders.map(s => `${s.name} (${s.role})`),
@@ -106,7 +106,7 @@ const ProjectCreateSinglePage = () => {
     const payload = transformBeforeSubmit();
 
     try {
-      const res = await fetch("http://localhost:8000/create-project", {
+      const res = await fetch("http://localhost:8000/project_manager/create-project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
