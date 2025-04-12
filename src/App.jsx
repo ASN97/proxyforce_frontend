@@ -1,16 +1,19 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import RoleSelect from './pages/RoleSelect';
+import ExperienceSelect from './pages/ExperienceSelect';
+// import ChatPage from './pages/ChatPage'; // optional for future
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-   <h1 className='text-2xl'>
-  Welcome
-   </h1>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<RoleSelect />} />
+        <Route path="/experience" element={<ExperienceSelect />} />
+        {/* <Route path="/chat" element={<ChatPage />} /> */}
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
