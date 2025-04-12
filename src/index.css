@@ -1,1 +1,80 @@
 @import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add this to your CSS file */
+.mask-image-dragon {
+  mask-image: url("data:image/svg+xml,%3Csvg width='100' height='50' viewBox='0 0 100 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 25H100M30 0C30 13.8071 41.1929 25 55 25C68.8071 25 80 13.8071 80 0M20 50C20 36.1929 31.1929 25 45 25C58.8071 25 70 36.1929 70 50' stroke='white' stroke-width='3'/%3E%3C/svg%3E");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+/* Add subtle animation for the background */
+@keyframes slowPulse {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+.animate-slow-pulse {
+  animation: slowPulse 8s infinite;
+}
+
+/* Custom scrollbar for the page */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0b19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #d97706, #b45309);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #f59e0b, #d97706);
+}
+
+/* Add some text effects */
+.text-shadow-gold {
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+/* Add a subtle animation to the page when it loads */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Dragon scale background pattern */
+.bg-scales {
+  background-color: #0b0b19;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Add a subtle hover effect to buttons */
+.hover-glow:hover {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
+}
