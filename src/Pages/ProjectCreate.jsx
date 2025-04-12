@@ -25,6 +25,8 @@ const ProjectCreateSinglePage = () => {
     successCriteria: "",
   });
 
+  const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -44,6 +46,34 @@ const ProjectCreateSinglePage = () => {
     const updated = [...formData[type]];
     updated.splice(index, 1);
     setFormData((prev) => ({ ...prev, [type]: updated }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Project name is required";
+    if (!formData.description.trim()) newErrors.description = "Description is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.deadline) newErrors.deadline = "Deadline is required";
+    if (!formData.techStack.trim()) newErrors.techStack = "Tech stack is required";
+    if (!formData.budget || isNaN(formData.budget)) newErrors.budget = "Valid budget required";
+    if (!formData.buffer || isNaN(formData.buffer)) newErrors.buffer = "Valid buffer is required";
+    if (!formData.objectives.trim()) newErrors.objectives = "Objectives are required";
+    if (!formData.successCriteria.trim()) newErrors.successCriteria = "Success criteria are required";
+
+    formData.teamMembers.forEach((m, i) => {
+      if (!m.name || !m.email || !m.skills || !m.hoursPerWeek || !m.hourlyWage) {
+        newErrors[`teamMember-${i}`] = "All team member fields are required";
+      }
+    });
+
+    formData.stakeholders.forEach((s, i) => {
+      if (!s.name || !s.email || !s.role) {
+        newErrors[`stakeholder-${i}`] = "All stakeholder fields are required";
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const transformBeforeSubmit = () => {
@@ -68,20 +98,22 @@ const ProjectCreateSinglePage = () => {
       additional_info: `${formData.objectives}. ${formData.successCriteria}`
     };
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     const payload = transformBeforeSubmit();
-  
+
     try {
       const res = await fetch("http://localhost:8000/create-project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-  
+
       const result = await res.json();
-  
+
       if (result.status === "ok") {
         navigate(`/project-success?role=${role}&tier=${tier}`);
       } else {
@@ -95,6 +127,7 @@ const ProjectCreateSinglePage = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B19] text-white overflow-hidden">
+      {/* Glowing background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[#0B0B19] bg-scales"></div>
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-purple-700 opacity-20 blur-[100px] animate-pulse"></div>
@@ -113,13 +146,20 @@ const ProjectCreateSinglePage = () => {
           {/* Basic Fields */}
           <div>
             <label className="block mb-1 text-sm">Project Name</label>
-            <input name="name" value={formData.name} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30 mb-2" placeholder="Project Name" />
+            <input name="name" value={formData.name} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30 mb-1" placeholder="Project Name" />
+            {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
+
             <label className="block mb-1 text-sm">Description</label>
-            <textarea name="description" value={formData.description} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30 mb-2" placeholder="Project Description" />
+            <textarea name="description" value={formData.description} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30 mb-1" placeholder="Project Description" />
+            {errors.description && <p className="text-red-400 text-sm">{errors.description}</p>}
+
             <label className="block mb-1 text-sm">Objectives</label>
-            <textarea name="objectives" value={formData.objectives} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30 mb-2" placeholder="Goals/Objectives" />
+            <textarea name="objectives" value={formData.objectives} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30 mb-1" placeholder="Goals/Objectives" />
+            {errors.objectives && <p className="text-red-400 text-sm">{errors.objectives}</p>}
+
             <label className="block mb-1 text-sm">Success Criteria</label>
             <textarea name="successCriteria" value={formData.successCriteria} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30" placeholder="Define success" />
+            {errors.successCriteria && <p className="text-red-400 text-sm">{errors.successCriteria}</p>}
           </div>
 
           {/* Dates & Stage */}
@@ -127,10 +167,12 @@ const ProjectCreateSinglePage = () => {
             <div>
               <label className="block mb-1 text-sm">Start Date</label>
               <input name="startDate" type="date" value={formData.startDate} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30" />
+              {errors.startDate && <p className="text-red-400 text-sm">{errors.startDate}</p>}
             </div>
             <div>
               <label className="block mb-1 text-sm">Deadline</label>
               <input name="deadline" type="date" value={formData.deadline} onChange={handleChange} className="w-full p-2 rounded bg-[#0B0B19] border border-amber-500/30" />
+              {errors.deadline && <p className="text-red-400 text-sm">{errors.deadline}</p>}
             </div>
             <div>
               <label className="block mb-1 text-sm">Stage</label>
@@ -153,6 +195,7 @@ const ProjectCreateSinglePage = () => {
                 <input placeholder="Hours/week" value={m.hoursPerWeek} onChange={(e) => handleArrayChange("teamMembers", i, "hoursPerWeek", e.target.value)} className="p-2 bg-[#0B0B19] border border-amber-500/30 rounded" />
                 <input placeholder="Hourly Wage" value={m.hourlyWage} onChange={(e) => handleArrayChange("teamMembers", i, "hourlyWage", e.target.value)} className="p-2 bg-[#0B0B19] border border-amber-500/30 rounded" />
                 {formData.teamMembers.length > 1 && <button type="button" onClick={() => removeArrayItem("teamMembers", i)} className="text-red-500 text-sm">Remove</button>}
+                {errors[`teamMember-${i}`] && <p className="text-red-400 text-sm col-span-2">{errors[`teamMember-${i}`]}</p>}
               </div>
             ))}
             <button type="button" onClick={() => addArrayItem("teamMembers", { name: "", email: "", skills: "", hoursPerWeek: "", hourlyWage: "" })} className="text-amber-400 border border-amber-500 px-3 py-1 rounded mt-2">+ Add Member</button>
@@ -167,6 +210,7 @@ const ProjectCreateSinglePage = () => {
                 <input placeholder="Email" value={s.email} onChange={(e) => handleArrayChange("stakeholders", i, "email", e.target.value)} className="p-2 bg-[#0B0B19] border border-amber-500/30 rounded" />
                 <input placeholder="Role" value={s.role} onChange={(e) => handleArrayChange("stakeholders", i, "role", e.target.value)} className="col-span-2 p-2 bg-[#0B0B19] border border-amber-500/30 rounded" />
                 {formData.stakeholders.length > 1 && <button type="button" onClick={() => removeArrayItem("stakeholders", i)} className="text-red-500 text-sm">Remove</button>}
+                {errors[`stakeholder-${i}`] && <p className="text-red-400 text-sm col-span-2">{errors[`stakeholder-${i}`]}</p>}
               </div>
             ))}
             <button type="button" onClick={() => addArrayItem("stakeholders", { name: "", email: "", role: "" })} className="text-amber-400 border border-amber-500 px-3 py-1 rounded mt-2">+ Add Stakeholder</button>
@@ -175,9 +219,15 @@ const ProjectCreateSinglePage = () => {
           {/* Final Details */}
           <div>
             <h2 className="text-lg font-bold mb-3">Other Details</h2>
-            <input placeholder="Tech Stack" name="techStack" value={formData.techStack} onChange={handleChange} className="w-full p-2 bg-[#0B0B19] border border-amber-500/30 rounded mb-2" />
-            <input placeholder="Buffer (days)" name="buffer" value={formData.buffer} onChange={handleChange} className="w-full p-2 bg-[#0B0B19] border border-amber-500/30 rounded mb-2" />
-            <input placeholder="Budget" name="budget" value={formData.budget} onChange={handleChange} className="w-full p-2 bg-[#0B0B19] border border-amber-500/30 rounded mb-2" />
+            <input placeholder="Tech Stack" name="techStack" value={formData.techStack} onChange={handleChange} className="w-full p-2 bg-[#0B0B19] border border-amber-500/30 rounded mb-1" />
+            {errors.techStack && <p className="text-red-400 text-sm">{errors.techStack}</p>}
+
+            <input placeholder="Buffer (days)" name="buffer" value={formData.buffer} onChange={handleChange} className="w-full p-2 bg-[#0B0B19] border border-amber-500/30 rounded mb-1" />
+            {errors.buffer && <p className="text-red-400 text-sm">{errors.buffer}</p>}
+
+            <input placeholder="Budget" name="budget" value={formData.budget} onChange={handleChange} className="w-full p-2 bg-[#0B0B19] border border-amber-500/30 rounded mb-1" />
+            {errors.budget && <p className="text-red-400 text-sm">{errors.budget}</p>}
+
             <input placeholder="Budget Used" name="budgetUsed" value={formData.budgetUsed} onChange={handleChange} className="w-full p-2 bg-[#0B0B19] border border-amber-500/30 rounded" />
           </div>
 
