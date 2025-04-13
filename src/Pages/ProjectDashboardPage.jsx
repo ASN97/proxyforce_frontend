@@ -23,7 +23,9 @@ import {
   ArrowRight,
   X,
   Send,
+  Loader,
 } from "lucide-react"
+import { projectsAPI, tasksAPI, chatAPI, riskAPI, emailAPI, timelineAPI } from "../services/api"
 
 const ProjectDashboardPage = () => {
   const navigate = useNavigate()
@@ -36,123 +38,14 @@ const ProjectDashboardPage = () => {
   const chatContainerRef = useRef(null)
 
   // State for project data
-  const [project, setProject] = useState({
-    id: projectId || "new-project",
-    name: "Website Redesign",
-    description: "Complete overhaul of company website with new branding",
-    startDate: "2023-10-01",
-    deadline: "2023-12-15",
-    progress: 25,
-    budget: 50000,
-    budgetUsed: 12500,
-    status: "In Progress",
-    teamMembers: [
-      {
-        id: 1,
-        name: "Sarah Chen",
-        role: "UI Designer",
-        avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-        tasks: 3,
-        completed: 1,
-      },
-      {
-        id: 2,
-        name: "Michael Rodriguez",
-        role: "Frontend Developer",
-        avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-        tasks: 5,
-        completed: 2,
-      },
-      {
-        id: 3,
-        name: "Emma Wilson",
-        role: "Content Writer",
-        avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-        tasks: 4,
-        completed: 0,
-      },
-    ],
-    milestones: [
-      { id: 1, name: "Research & Planning", deadline: "2023-10-15", status: "completed", progress: 100 },
-      { id: 2, name: "Design Phase", deadline: "2023-11-15", status: "in-progress", progress: 60 },
-      { id: 3, name: "Development", deadline: "2023-12-01", status: "not-started", progress: 0 },
-      { id: 4, name: "Testing & Launch", deadline: "2023-12-15", status: "not-started", progress: 0 },
-    ],
-    tasks: [
-      {
-        id: 1,
-        name: "Create wireframes",
-        assignee: "Sarah Chen",
-        deadline: "2023-10-10",
-        status: "completed",
-        priority: "high",
-      },
-      {
-        id: 2,
-        name: "Design homepage mockup",
-        assignee: "Sarah Chen",
-        deadline: "2023-10-25",
-        status: "in-progress",
-        priority: "high",
-      },
-      {
-        id: 3,
-        name: "Set up development environment",
-        assignee: "Michael Rodriguez",
-        deadline: "2023-10-15",
-        status: "completed",
-        priority: "medium",
-      },
-      {
-        id: 4,
-        name: "Implement responsive navigation",
-        assignee: "Michael Rodriguez",
-        deadline: "2023-11-05",
-        status: "in-progress",
-        priority: "high",
-      },
-      {
-        id: 5,
-        name: "Write homepage content",
-        assignee: "Emma Wilson",
-        deadline: "2023-11-10",
-        status: "not-started",
-        priority: "medium",
-      },
-    ],
-    risks: [
-      {
-        id: 1,
-        description: "Potential delay in content delivery",
-        impact: "medium",
-        mitigation: "Schedule weekly content reviews",
-      },
-      {
-        id: 2,
-        description: "Browser compatibility issues",
-        impact: "high",
-        mitigation: "Implement cross-browser testing early",
-      },
-      {
-        id: 3,
-        description: "Client feedback delays",
-        impact: "medium",
-        mitigation: "Set up automated reminder system for feedback",
-      },
-    ],
-  })
+  const [project, setProject] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   // State for chat
-  const [messages, setMessages] = useState([
-    {
-      id: "1",
-      content: `Hi there! I'm Alex Morgan, your AI Project Manager. I've analyzed your project "Website Redesign" and prepared an initial plan. What would you like to discuss first?`,
-      sender: "ai",
-      timestamp: new Date(Date.now() - 3600000),
-    },
-  ])
+  const [messages, setMessages] = useState([])
   const [input, setInput] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
 
   // State for active tab
   const [activeTab, setActiveTab] = useState("overview")
@@ -166,7 +59,9 @@ const ProjectDashboardPage = () => {
   })
 
   // State for timeline view
-  const [timelineView, setTimelineView] = useState("gantt") // gantt, calendar
+  const [timelineView, setTimelineView] = useState("gantt")
+  const [timelineData, setTimelineData] = useState(null)
+  const [isLoadingTimeline, setIsLoadingTimeline] = useState(false)
 
   // State for task creation modal
   const [showTaskModal, setShowTaskModal] = useState(false)
@@ -177,79 +72,78 @@ const ProjectDashboardPage = () => {
     priority: "medium",
     description: "",
   })
+  const [isSubmittingTask, setIsSubmittingTask] = useState(false)
 
   // State for email generation
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emailTemplate, setEmailTemplate] = useState({
     recipient: "all",
-    subject: `${project.name} - Status Update`,
+    subject: "",
     content: "",
     includeTimeline: true,
     includeTaskSummary: true,
   })
+  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false)
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
 
-  // Role-specific theming
-  const roleThemes = {
-    pm: {
-      primary: "bg-blue-600",
-      secondary: "bg-blue-100",
-      text: "text-blue-600",
-      border: "border-blue-300",
-      hover: "hover:bg-blue-700",
-      light: "bg-blue-50",
-      name: "Alex Morgan",
-      title: "Project Manager",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      bgColor: "#3B82F6",
-    },
-    sales: {
-      primary: "bg-red-600",
-      secondary: "bg-red-100",
-      text: "text-red-600",
-      border: "border-red-300",
-      hover: "hover:bg-red-700",
-      light: "bg-red-50",
-      name: "Jordan Smith",
-      title: "Sales Executive",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      bgColor: "#EF4444",
-    },
-    marketing: {
-      primary: "bg-green-600",
-      secondary: "bg-green-100",
-      text: "text-green-600",
-      border: "border-green-300",
-      hover: "hover:bg-green-700",
-      light: "bg-green-50",
-      name: "Taylor Reed",
-      title: "Marketing Analyst",
-      avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-      bgColor: "#22C55E",
-    },
-  }
+  // Fetch project data
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
 
-  const theme = roleThemes[role] || roleThemes["pm"]
+        // Fetch project details
+        const projectData = await projectsAPI.getProjectById(projectId)
+        setProject(projectData)
 
-  // Convert tier to years of experience and title
-  const tierToYears = {
-    1: "2",
-    2: "5",
-    3: "10",
-  }
-  const tierToTitle = {
-    1: "Apprentice",
-    2: "Adept",
-    3: "Master",
-  }
-  const experience = tierToYears[tier] || "2"
-  const tierTitle = tierToTitle[tier] || "Apprentice"
+        // Initialize email template with project name
+        setEmailTemplate((prev) => ({
+          ...prev,
+          subject: `${projectData.name} - Status Update`,
+        }))
+
+        // Fetch initial chat messages
+        const chatMessages = await chatAPI.getProjectMessages(projectId)
+        setMessages(chatMessages)
+      } catch (err) {
+        console.error("Failed to fetch project data:", err)
+        setError("Failed to load project data. Please try again later.")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (projectId) {
+      fetchProjectData()
+    }
+  }, [projectId])
+
+  // Fetch timeline data when timeline tab is active
+  useEffect(() => {
+    const fetchTimelineData = async () => {
+      if (activeTab === "timeline" && projectId) {
+        try {
+          setIsLoadingTimeline(true)
+          const data = await timelineAPI.getProjectTimeline(projectId)
+          setTimelineData(data)
+        } catch (err) {
+          console.error("Failed to fetch timeline data:", err)
+        } finally {
+          setIsLoadingTimeline(false)
+        }
+      }
+    }
+
+    fetchTimelineData()
+  }, [activeTab, projectId])
 
   // Draw timeline on component mount and when tab changes
   useEffect(() => {
-    if (activeTab === "timeline" && timelineRef.current) {
+    if (activeTab === "timeline" && timelineRef.current && timelineData && !isLoadingTimeline) {
       drawTimeline()
     }
-  }, [activeTab, timelineView])
+  }, [activeTab, timelineView, timelineData, isLoadingTimeline])
 
   // Auto-scroll chat to bottom when new messages are added
   useEffect(() => {
@@ -260,10 +154,10 @@ const ProjectDashboardPage = () => {
 
   // Generate email content when modal is opened
   useEffect(() => {
-    if (showEmailModal) {
+    if (showEmailModal && project) {
       generateEmail()
     }
-  }, [showEmailModal])
+  }, [showEmailModal, project])
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -272,8 +166,8 @@ const ProjectDashboardPage = () => {
     }))
   }
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return
+  const handleSendMessage = async () => {
+    if (!input.trim() || isSendingMessage) return
 
     // Add user message
     const userMessage = {
@@ -285,55 +179,63 @@ const ProjectDashboardPage = () => {
 
     setMessages((prev) => [...prev, userMessage])
     setInput("")
-    setLoading(true)
+    setIsSendingMessage(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      let responseMessage = ""
+    try {
+      // Send message to API
+      const response = await chatAPI.sendProjectMessage(projectId, input)
 
-      // Generate contextual responses based on user input
-      const userInput = input.toLowerCase()
+      // Add AI response
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: response.id || Date.now().toString(),
+          content: response.content,
+          sender: "ai",
+          timestamp: new Date(),
+        },
+      ])
 
-      if (userInput.includes("timeline") || userInput.includes("schedule")) {
-        responseMessage =
-          "I've analyzed the project timeline and created a Gantt chart visualization. You can view it in the Timeline tab. Based on team availability, I recommend extending the Design Phase by one week to ensure quality deliverables."
-        setActiveTab("timeline")
-      } else if (userInput.includes("task") || userInput.includes("assign")) {
-        responseMessage =
-          "I've assigned tasks to team members based on their skills and availability. Sarah has UI design expertise, so she's handling the wireframes and mockups. Michael is focused on frontend development tasks. Would you like me to adjust any assignments?"
-        setActiveTab("tasks")
-      } else if (userInput.includes("risk") || userInput.includes("issue")) {
-        responseMessage =
-          "I've identified three key risks for this project. The highest impact risk is browser compatibility issues. I recommend implementing cross-browser testing early in the development phase to mitigate this risk."
-        setActiveTab("overview")
-        setExpandedSections((prev) => ({ ...prev, risks: true }))
-      } else if (userInput.includes("email") || userInput.includes("update") || userInput.includes("stakeholder")) {
-        responseMessage =
-          "I can draft a project status update email for stakeholders. Would you like me to include the current timeline, budget status, and completed milestones in the email?"
-        setShowEmailModal(true)
-      } else if (userInput.includes("budget") || userInput.includes("cost")) {
-        responseMessage =
-          "The project has used $12,500 of the $50,000 budget (25%). Based on the current burn rate and timeline, we're tracking within budget. The design phase has the highest resource allocation at 40% of the total budget."
-      } else {
-        const responseMessages = [
-          "I'll create a timeline visualization for the project right away. Give me a moment to generate that for you.",
-          "Based on the team's skills and availability, I've assigned tasks for the upcoming week. Would you like me to show you the breakdown?",
-          "I've identified a potential risk with the current timeline. The design phase might need more time based on similar projects I've analyzed.",
-          "I can draft an email update to stakeholders summarizing our current progress. Would you like me to prepare that for you?",
-        ]
-        responseMessage = responseMessages[Math.floor(Math.random() * responseMessages.length)]
+      // Handle any special actions from the response
+      if (response.action) {
+        handleChatAction(response.action)
       }
+    } catch (err) {
+      console.error("Failed to send message:", err)
 
-      const aiMessage = {
+      // Add error message
+      setMessages((prev) => [...prev, {
         id: Date.now().toString(),
-        content: responseMessage,
+        content: "Sorry, I encountered an error processing your request. Please try again later.",
         sender: "ai",
         timestamp: new Date(),
-      }
+      }])
+    } finally {
+      setIsSendingMessage(false)
+    }
+  }
 
-      setMessages((prev) => [...prev, aiMessage])
-      setLoading(false)
-    }, 1500)
+  const handleChatAction = (action) => {
+    // Handle special actions from chat responses
+    switch (action.type) {
+      case "switchTab":
+        setActiveTab(action.tab)
+        break
+      case "toggleSection":
+        setExpandedSections((prev) => ({
+          ...prev,
+          [action.section]: true,
+        }))
+        break
+      case "showEmailModal":
+        setShowEmailModal(true)
+        break
+      case "generateRiskReport":
+        generateRiskReport()
+        break
+      default:
+        break
+    }
   }
 
   const handleKeyDown = (e) => {
@@ -349,18 +251,20 @@ const ProjectDashboardPage = () => {
 
   // Calculate days remaining
   const calculateDaysRemaining = () => {
+    if (!project) return 0
+
     const deadline = new Date(project.deadline)
     const today = new Date()
     const diffTime = deadline - today
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    return diffDays > 0 ? diffDays : 0
   }
 
-  const daysRemaining = calculateDaysRemaining()
+  const daysRemaining = project ? calculateDaysRemaining() : 0
 
   // Draw timeline visualization
   const drawTimeline = () => {
-    if (!timelineRef.current) return
+    if (!timelineRef.current || !timelineData) return
 
     const canvas = timelineRef.current
     const ctx = canvas.getContext("2d")
@@ -378,6 +282,8 @@ const ProjectDashboardPage = () => {
   }
 
   const drawGanttChart = (ctx, width, height) => {
+    if (!project || !timelineData) return
+
     const startDate = new Date(project.startDate)
     const endDate = new Date(project.deadline)
     const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
@@ -448,9 +354,10 @@ const ProjectDashboardPage = () => {
     }
 
     // Draw milestones
-    const milestoneHeight = chartHeight / (project.milestones.length + 1)
+    const milestones = timelineData.milestones || []
+    const milestoneHeight = chartHeight / (milestones.length + 1)
 
-    project.milestones.forEach((milestone, index) => {
+    milestones.forEach((milestone, index) => {
       const milestoneDate = new Date(milestone.deadline)
       const daysPassed = Math.ceil((milestoneDate - startDate) / (1000 * 60 * 60 * 24))
       const x = padding + daysPassed * dayWidth
@@ -458,9 +365,7 @@ const ProjectDashboardPage = () => {
 
       // Draw milestone bar
       const startDaysPassed =
-        index === 0
-          ? 0
-          : Math.ceil((new Date(project.milestones[index - 1].deadline) - startDate) / (1000 * 60 * 60 * 24))
+        index === 0 ? 0 : Math.ceil((new Date(milestones[index - 1].deadline) - startDate) / (1000 * 60 * 60 * 24))
       const startX = padding + startDaysPassed * dayWidth
       const barWidth = x - startX
 
@@ -506,117 +411,229 @@ const ProjectDashboardPage = () => {
     setShowTaskModal(true)
   }
 
-  const handleTaskSubmit = () => {
-    // Add new task to project
-    const newTaskObj = {
-      id: Date.now(),
-      name: newTask.name,
-      assignee: newTask.assignee,
-      deadline: newTask.deadline,
-      status: "not-started",
-      priority: newTask.priority,
+  const handleTaskSubmit = async () => {
+    if (isSubmittingTask) return
+
+    try {
+      setIsSubmittingTask(true)
+
+      // Submit new task to API
+      const taskData = {
+        name: newTask.name,
+        assignee: newTask.assignee,
+        deadline: newTask.deadline,
+        priority: newTask.priority,
+        description: newTask.description,
+      }
+
+      const response = await tasksAPI.createTask(projectId, taskData)
+
+      // Update project tasks
+      setProject((prev) => ({
+        ...prev,
+        tasks: [...prev.tasks, response],
+      }))
+
+      // Reset form and close modal
+      setNewTask({
+        name: "",
+        assignee: "",
+        deadline: "",
+        priority: "medium",
+        description: "",
+      })
+      setShowTaskModal(false)
+
+      // Show confirmation message in chat
+      const aiMessage = {
+        id: Date.now().toString(),
+        content: `I've added the new task "${response.name}" and assigned it to ${response.assignee}. Based on their current workload and skills, this is an appropriate assignment. The task has been scheduled for completion by ${new Date(response.deadline).toLocaleDateString()}.`,
+        sender: "ai",
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (err) {
+      console.error("Failed to create task:", err)
+      alert("Failed to create task. Please try again.")
+    } finally {
+      setIsSubmittingTask(false)
     }
-
-    setProject((prev) => ({
-      ...prev,
-      tasks: [...prev.tasks, newTaskObj],
-    }))
-
-    // Reset form and close modal
-    setNewTask({
-      name: "",
-      assignee: "",
-      deadline: "",
-      priority: "medium",
-      description: "",
-    })
-    setShowTaskModal(false)
-
-    // Show confirmation message in chat
-    const aiMessage = {
-      id: Date.now().toString(),
-      content: `I've added the new task "${newTaskObj.name}" and assigned it to ${newTaskObj.assignee}. Based on their current workload and skills, this is an appropriate assignment. The task has been scheduled for completion by ${new Date(newTaskObj.deadline).toLocaleDateString()}.`,
-      sender: "ai",
-      timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, aiMessage])
   }
 
   // Handle email generation
-  const generateEmail = () => {
-    // Generate email content based on template
-    let content = `Dear ${emailTemplate.recipient === "all" ? "Team" : emailTemplate.recipient},\n\n`
+  const generateEmail = async () => {
+    if (!project || isGeneratingEmail) return
 
-    content += `Here's a status update for the ${project.name} project:\n\n`
-    content += `Overall Progress: ${project.progress}%\n`
-    content += `Days Remaining: ${daysRemaining}\n\n`
+    try {
+      setIsGeneratingEmail(true)
 
-    if (emailTemplate.includeTimeline) {
-      content += "Current Milestones:\n"
-      project.milestones.forEach((milestone) => {
-        content += `- ${milestone.name}: ${milestone.status === "completed" ? "Completed" : milestone.status === "in-progress" ? "In Progress" : "Not Started"} (${milestone.progress}%)\n`
-      })
-      content += "\n"
+      // Generate email content from API
+      const templateData = {
+        recipient: emailTemplate.recipient,
+        includeTimeline: emailTemplate.includeTimeline,
+        includeTaskSummary: emailTemplate.includeTaskSummary,
+      }
+
+      const response = await emailAPI.generateEmailTemplate(projectId, templateData)
+
+      setEmailTemplate((prev) => ({
+        ...prev,
+        content: response.content,
+        subject: response.subject || prev.subject,
+      }))
+    } catch (err) {
+      console.error("Failed to generate email:", err)
+    } finally {
+      setIsGeneratingEmail(false)
     }
-
-    if (emailTemplate.includeTaskSummary) {
-      content += "Task Summary:\n"
-      const completed = project.tasks.filter((task) => task.status === "completed").length
-      const inProgress = project.tasks.filter((task) => task.status === "in-progress").length
-      const notStarted = project.tasks.filter((task) => task.status === "not-started").length
-
-      content += `- Completed: ${completed}\n`
-      content += `- In Progress: ${inProgress}\n`
-      content += `- Not Started: ${notStarted}\n\n`
-    }
-
-    content += "Please let me know if you have any questions or concerns.\n\n"
-    content += `Best regards,\n${theme.name}\n${theme.title}`
-
-    setEmailTemplate((prev) => ({ ...prev, content }))
   }
 
-  const handleSendEmail = () => {
-    // In a real app, this would send the email
-    setShowEmailModal(false)
+  const handleSendEmail = async () => {
+    if (isSendingEmail) return
 
-    // Show confirmation message in chat
-    const aiMessage = {
-      id: Date.now().toString(),
-      content: `I've sent the project update email to ${emailTemplate.recipient === "all" ? "all stakeholders" : emailTemplate.recipient}. The email includes the current project status, milestone progress, and task summary as requested.`,
-      sender: "ai",
-      timestamp: new Date(),
+    try {
+      setIsSendingEmail(true)
+
+      // Send email via API
+      await emailAPI.sendEmail(projectId, emailTemplate)
+
+      setShowEmailModal(false)
+
+      // Show confirmation message in chat
+      const aiMessage = {
+        id: Date.now().toString(),
+        content: `I've sent the project update email to ${emailTemplate.recipient === "all" ? "all stakeholders" : emailTemplate.recipient}. The email includes the current project status, milestone progress, and task summary as requested.`,
+        sender: "ai",
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (err) {
+      console.error("Failed to send email:", err)
+      alert("Failed to send email. Please try again.")
+    } finally {
+      setIsSendingEmail(false)
     }
-
-    setMessages((prev) => [...prev, aiMessage])
   }
 
   // Generate weekly task assignments
-  const generateWeeklyTasks = () => {
-    // In a real app, this would use AI to generate optimal task assignments
-    // For now, we'll simulate this with a chat message
+  const generateWeeklyTasks = async () => {
+    try {
+      const response = await timelineAPI.generateWeeklyPlan(projectId)
 
-    const aiMessage = {
-      id: Date.now().toString(),
-      content: `I've analyzed team member skills and availability to create this week's task assignments:\n\n1. Sarah Chen (UI Designer): Complete homepage mockup, start work on product page designs\n2. Michael Rodriguez (Frontend Dev): Finish responsive navigation, implement homepage components\n3. Emma Wilson (Content Writer): Draft homepage content, prepare product descriptions\n\nThis distribution balances workload based on each member's capacity (Sarah: 30hrs/week, Michael: 40hrs/week, Emma: 20hrs/week) and optimizes for their skill strengths.`,
-      sender: "ai",
-      timestamp: new Date(),
+      // Show response in chat
+      const aiMessage = {
+        id: Date.now().toString(),
+        content: response.message || `I've analyzed team member skills and availability to create this week's task assignments:\n\n${response.assignments.map((a, i) => `${i + 1}. ${a.member} (${a.role}): ${a.tasks.join(", ")}`).join("\n")}\n\nThis distribution balances workload based on each member's capacity and optimizes for their skill strengths.`,
+        sender: "ai",
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (err) {
+      console.error("Failed to generate weekly tasks:", err)
+
+      // Show error message
+      const aiMessage = {
+        id: Date.now().toString(),
+        content: "I encountered an error while generating the weekly task assignments. Please try again later.",
+        sender: "ai",
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
     }
-
-    setMessages((prev) => [...prev, aiMessage])
   }
 
   // Generate risk analysis report
-  const generateRiskReport = () => {
-    const aiMessage = {
-      id: Date.now().toString(),
-      content: `📊 **Risk Analysis Report**\n\nI've analyzed the project risks and here's my assessment:\n\n1. **Browser Compatibility Issues** (High Impact)\n   - Probability: 70%\n   - Mitigation: Implement cross-browser testing in sprint 2\n   - Contingency: Allocate 3 extra days for fixes\n\n2. **Content Delivery Delays** (Medium Impact)\n   - Probability: 50%\n   - Mitigation: Schedule weekly content reviews\n   - Contingency: Prepare placeholder content\n\n3. **Client Feedback Delays** (Medium Impact)\n   - Probability: 40%\n   - Mitigation: Set up automated reminders\n   - Contingency: Define default decisions for common scenarios\n\nBased on Monte Carlo simulation, there's a 65% chance of completing the project on time with current mitigations in place.`,
-      sender: "ai",
-      timestamp: new Date(),
-    }
+  const generateRiskReport = async () => {
+    try {
+      const response = await riskAPI.generateRiskReport(projectId)
 
-    setMessages((prev) => [...prev, aiMessage])
+      // Show response in chat
+      const aiMessage = {
+        id: Date.now().toString(),
+        content: response.report || "📊 **Risk Analysis Report**\n\nI've analyzed the project risks and here's my assessment:\n\n" +
+          response.risks
+            .map(
+              (risk, i) =>
+                `${i + 1}. **${risk.description}** (${risk.impact} Impact)\n   - Probability: ${risk.probability}%\n   - Mitigation: ${risk.mitigation}\n   - Contingency: ${risk.contingency}`,
+            )
+            .join("\n\n") +
+          `\n\nBased on Monte Carlo simulation, there's a ${response.completionProbability}% chance of completing the project on time with current mitigations in place.`,
+        sender: "ai",
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (err) {
+      console.error("Failed to generate risk report:", err)
+
+      // Show error message
+      const aiMessage = {
+        id: Date.now().toString(),
+        content: "I encountered an error while generating the risk analysis report. Please try again later.",
+        sender: "ai",
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0B0B19] text-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="h-12 w-12 text-amber-500 animate-spin mx-auto mb-4" />
+          <p className="text-xl">Loading project data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#0B0B19] text-white flex items-center justify-center">
+        <div className="bg-[#151528]/80 backdrop-blur-sm rounded-xl border border-amber-500/30 p-8 max-w-md text-center">
+          <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Error Loading Project</h2>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <div className="flex space-x-4 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-[#0B0B19] hover:bg-gray-900 text-white px-4 py-2 rounded-lg"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={goBack}
+              className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white px-4 py-2 rounded-lg"
+            >
+              Back to Projects
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-[#0B0B19] text-white flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <p className="text-xl">Project not found</p>
+          <button
+            onClick={goBack}
+            className="mt-4 bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white px-4 py-2 rounded-lg"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -643,7 +660,7 @@ const ProjectDashboardPage = () => {
       </div>
 
       {/* Header */}
-      <header className={`${theme.primary} relative z-10 shadow-lg`}>
+      <header className={`${role} relative z-10 shadow-lg`}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div className="flex items-center mb-4 md:mb-0">
@@ -716,7 +733,7 @@ const ProjectDashboardPage = () => {
                   : "text-gray-400 hover:text-amber-400"
               }`}
             >
-              Chat with {theme.name}
+              Chat with {role}
             </button>
           </div>
         </div>
@@ -753,7 +770,7 @@ const ProjectDashboardPage = () => {
                     <Users className="h-5 w-5 text-amber-500 mr-2" />
                     <span className="text-gray-400 text-sm">Team</span>
                   </div>
-                  <p className="text-2xl font-bold">{project.teamMembers.length}</p>
+                  <p className="text-2xl font-bold">{project.teamMembers?.length || 0}</p>
                   <p className="text-xs text-gray-400">members</p>
                 </div>
 
@@ -787,7 +804,7 @@ const ProjectDashboardPage = () => {
                 {expandedSections.milestones && (
                   <div className="p-4 pt-0">
                     <div className="space-y-4">
-                      {project.milestones.map((milestone) => (
+                      {project.milestones?.map((milestone) => (
                         <div key={milestone.id} className="bg-[#0B0B19]/50 rounded-lg p-4">
                           <div className="flex justify-between items-start mb-2">
                             <div>
@@ -871,7 +888,7 @@ const ProjectDashboardPage = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {project.tasks.map((task) => (
+                          {project.tasks?.map((task) => (
                             <tr key={task.id} className="border-t border-gray-800">
                               <td className="py-3">{task.name}</td>
                               <td className="py-3">{task.assignee}</td>
@@ -950,7 +967,7 @@ const ProjectDashboardPage = () => {
                 {expandedSections.risks && (
                   <div className="p-4 pt-0">
                     <div className="space-y-4">
-                      {project.risks.map((risk) => (
+                      {project.risks?.map((risk) => (
                         <div key={risk.id} className="bg-[#0B0B19]/50 rounded-lg p-4">
                           <div className="flex items-start mb-2">
                             <div
@@ -1001,23 +1018,25 @@ const ProjectDashboardPage = () => {
                   <div className="relative mr-3">
                     <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-amber-700 rounded-full opacity-50 blur-sm"></div>
                     <img
-                      src={theme.avatar || "/placeholder.svg"}
-                      alt={theme.name}
+                      src={role|| "/placeholder.svg"}
+                      alt={role}
                       className="w-12 h-12 rounded-full relative z-10 ring-2 ring-amber-500"
                     />
                   </div>
                   <div>
-                    <h3 className="font-bold">{theme.name}</h3>
+                    <h3 className="font-bold">{role}</h3>
                     <p className="text-xs text-gray-400">
-                      {tierTitle} {theme.title} • {experience} years experience
+                      {tier} {role} • {role.experience} years experience
                     </p>
                   </div>
                 </div>
 
                 <div className="bg-[#0B0B19]/50 rounded-lg p-3 mb-4">
                   <p className="text-sm">
-                    I've analyzed your project timeline. The design phase might need an extra week based on the
-                    complexity of the requirements.
+                    {messages.length > 0 && messages[messages.length - 1].sender === "ai"
+                      ? messages[messages.length - 1].content.substring(0, 120) +
+                        (messages[messages.length - 1].content.length > 120 ? "..." : "")
+                      : "I've analyzed your project timeline. The design phase might need an extra week based on the complexity of the requirements."}
                   </p>
                 </div>
 
@@ -1059,7 +1078,7 @@ const ProjectDashboardPage = () => {
                 {expandedSections.team && (
                   <div className="p-4 pt-0">
                     <div className="space-y-3">
-                      {project.teamMembers.map((member) => (
+                      {project.teamMembers?.map((member) => (
                         <div
                           key={member.id}
                           className="flex items-center justify-between bg-[#0B0B19]/50 rounded-lg p-3"
@@ -1185,76 +1204,81 @@ const ProjectDashboardPage = () => {
             </div>
 
             <div className="bg-[#151528]/80 backdrop-blur-sm rounded-xl border border-amber-500/20 p-6">
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">Project Duration</h3>
-                  <span className="text-sm text-gray-400">
-                    {new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} -
-                    {new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </span>
+              {isLoadingTimeline ? (
+                <div className="flex justify-center items-center h-[300px]">
+                  <Loader className="h-8 w-8 text-amber-500 animate-spin" />
+                  <span className="ml-2">Loading timeline data...</span>
                 </div>
-                <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-500 to-amber-700"
-                    style={{ width: `${project.progress}%` }}
-                  ></div>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium">Project Duration</h3>
+                      <span className="text-sm text-gray-400">
+                        {new Date(project.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} -
+                        {new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-500 to-amber-700"
+                        style={{ width: `${project.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
 
-              <div className="border border-gray-800 rounded-lg overflow-hidden">
-                <canvas ref={timelineRef} className="w-full h-[300px]"></canvas>
-              </div>
+                  <div className="border border-gray-800 rounded-lg overflow-hidden">
+                    <canvas ref={timelineRef} className="w-full h-[300px]"></canvas>
+                  </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-[#0B0B19]/50 rounded-lg p-4">
-                  <h3 className="font-medium mb-3 flex items-center">
-                    <Calendar className="h-4 w-4 text-amber-500 mr-2" />
-                    Upcoming Milestones
-                  </h3>
-                  <ul className="space-y-2">
-                    {project.milestones
-                      .filter((m) => m.status !== "completed")
-                      .map((milestone) => (
-                        <li key={milestone.id} className="flex justify-between items-center text-sm">
-                          <span>{milestone.name}</span>
-                          <span className="text-gray-400">
-                            {new Date(milestone.deadline).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </span>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-[#0B0B19]/50 rounded-lg p-4">
+                      <h3 className="font-medium mb-3 flex items-center">
+                        <Calendar className="h-4 w-4 text-amber-500 mr-2" />
+                        Upcoming Milestones
+                      </h3>
+                      <ul className="space-y-2">
+                        {project.milestones
+                          ?.filter((m) => m.status !== "completed")
+                          .map((milestone) => (
+                            <li key={milestone.id} className="flex justify-between items-center text-sm">
+                              <span>{milestone.name}</span>
+                              <span className="text-gray-400">
+                                {new Date(milestone.deadline).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
 
-                <div className="bg-[#0B0B19]/50 rounded-lg p-4">
-                  <h3 className="font-medium mb-3 flex items-center">
-                    <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
-                    Timeline Insights
-                  </h3>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <div className="bg-amber-500/20 p-1 rounded-full mr-2 mt-0.5">
-                        <Clock className="h-3 w-3 text-amber-500" />
-                      </div>
-                      <span>Design phase is currently 2 days behind schedule</span>
-                    </li>
-                    <li className="flex items-start">
-                      <div className="bg-green-500/20 p-1 rounded-full mr-2 mt-0.5">
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                      </div>
-                      <span>Research phase completed 1 day ahead of schedule</span>
-                    </li>
-                    <li className="flex items-start">
-                      <div className="bg-blue-500/20 p-1 rounded-full mr-2 mt-0.5">
-                        <Users className="h-3 w-3 text-blue-500" />
-                      </div>
-                      <span>Team capacity is optimal for current timeline</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+                    <div className="bg-[#0B0B19]/50 rounded-lg p-4">
+                      <h3 className="font-medium mb-3 flex items-center">
+                        <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+                        Timeline Insights
+                      </h3>
+                      <ul className="space-y-2 text-sm">
+                        {timelineData?.insights?.map((insight, index) => (
+                          <li key={index} className="flex items-start">
+                            <div className={`bg-${insight.type}-500/20 p-1 rounded-full mr-2 mt-0.5`}>
+                              {insight.type === "warning" ? (
+                                <Clock className={`h-3 w-3 text-${insight.type}-500`} />
+                              ) : insight.type === "success" ? (
+                                <CheckCircle className={`h-3 w-3 text-${insight.type}-500`} />
+                              ) : (
+                                <Users className={`h-3 w-3 text-${insight.type}-500`} />
+                              )}
+                            </div>
+                            <span>{insight.message}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1290,7 +1314,9 @@ const ProjectDashboardPage = () => {
                 <div className="bg-[#0B0B19]/50 rounded-lg p-4 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Completed</p>
-                    <p className="text-2xl font-bold">{project.tasks.filter((t) => t.status === "completed").length}</p>
+                    <p className="text-2xl font-bold">
+                      {project.tasks?.filter((t) => t.status === "completed").length || 0}
+                    </p>
                   </div>
                   <div className="bg-green-900/30 p-3 rounded-full">
                     <CheckCircle className="h-6 w-6 text-green-400" />
@@ -1301,7 +1327,7 @@ const ProjectDashboardPage = () => {
                   <div>
                     <p className="text-sm text-gray-400">In Progress</p>
                     <p className="text-2xl font-bold">
-                      {project.tasks.filter((t) => t.status === "in-progress").length}
+                      {project.tasks?.filter((t) => t.status === "in-progress").length || 0}
                     </p>
                   </div>
                   <div className="bg-blue-900/30 p-3 rounded-full">
@@ -1313,7 +1339,7 @@ const ProjectDashboardPage = () => {
                   <div>
                     <p className="text-sm text-gray-400">Not Started</p>
                     <p className="text-2xl font-bold">
-                      {project.tasks.filter((t) => t.status === "not-started").length}
+                      {project.tasks?.filter((t) => t.status === "not-started").length || 0}
                     </p>
                   </div>
                   <div className="bg-amber-900/30 p-3 rounded-full">
@@ -1335,7 +1361,7 @@ const ProjectDashboardPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {project.tasks.map((task) => (
+                    {project.tasks?.map((task) => (
                       <tr key={task.id} className="border-b border-gray-800 hover:bg-[#0B0B19]/30">
                         <td className="py-4 pl-4">{task.name}</td>
                         <td className="py-4">{task.assignee}</td>
@@ -1394,7 +1420,7 @@ const ProjectDashboardPage = () => {
                   Task Distribution by Team Member
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {project.teamMembers.map((member) => (
+                  {project.teamMembers?.map((member) => (
                     <div key={member.id} className="flex items-center">
                       <img
                         src={member.avatar || "/placeholder.svg"}
@@ -1447,7 +1473,7 @@ const ProjectDashboardPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {project.teamMembers.map((member) => (
+              {project.teamMembers?.map((member) => (
                 <div
                   key={member.id}
                   className="bg-[#151528]/80 backdrop-blur-sm rounded-xl border border-amber-500/20 overflow-hidden"
@@ -1484,14 +1510,16 @@ const ProjectDashboardPage = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Current Tasks:</span>
                         <span>
-                          {project.tasks.filter((t) => t.assignee === member.name && t.status === "in-progress").length}
+                          {project.tasks?.filter((t) => t.assignee === member.name && t.status === "in-progress")
+                            .length || 0}
                         </span>
                       </div>
 
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Upcoming Tasks:</span>
                         <span>
-                          {project.tasks.filter((t) => t.assignee === member.name && t.status === "not-started").length}
+                          {project.tasks?.filter((t) => t.assignee === member.name && t.status === "not-started")
+                            .length || 0}
                         </span>
                       </div>
                     </div>
@@ -1512,7 +1540,7 @@ const ProjectDashboardPage = () => {
                     <h4 className="font-medium mb-2">Current Assignments</h4>
                     <ul className="space-y-2 text-sm">
                       {project.tasks
-                        .filter((t) => t.assignee === member.name && t.status === "in-progress")
+                        ?.filter((t) => t.assignee === member.name && t.status === "in-progress")
                         .map((task) => (
                           <li key={task.id} className="flex justify-between">
                             <span>{task.name}</span>
@@ -1521,7 +1549,7 @@ const ProjectDashboardPage = () => {
                             </span>
                           </li>
                         ))}
-                      {project.tasks.filter((t) => t.assignee === member.name && t.status === "in-progress").length ===
+                      {project.tasks?.filter((t) => t.assignee === member.name && t.status === "in-progress").length ===
                         0 && <li className="text-gray-400">No current assignments</li>}
                     </ul>
                   </div>
@@ -1544,8 +1572,8 @@ const ProjectDashboardPage = () => {
                       <div className="relative">
                         <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-amber-700 rounded-full opacity-50 blur-sm"></div>
                         <img
-                          src={theme.avatar || "/placeholder.svg"}
-                          alt={theme.name}
+                          src={role|| "/placeholder.svg"}
+                          alt={role}
                           className="w-8 h-8 rounded-full relative z-10 ring-1 ring-amber-500"
                         />
                       </div>
@@ -1565,14 +1593,14 @@ const ProjectDashboardPage = () => {
                   </div>
                 </div>
               ))}
-              {loading && (
+              {isSendingMessage && (
                 <div className="flex justify-start mb-4">
                   <div className="flex-shrink-0 mr-3">
                     <div className="relative">
                       <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-amber-700 rounded-full opacity-50 blur-sm"></div>
                       <img
-                        src={theme.avatar || "/placeholder.svg"}
-                        alt={theme.name}
+                        src={role || "/placeholder.svg"}
+                        alt={role}
                         className="w-8 h-8 rounded-full relative z-10 ring-1 ring-amber-500"
                       />
                     </div>
@@ -1603,21 +1631,21 @@ const ProjectDashboardPage = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Ask ${theme.name} about your project...`}
+                  placeholder={`Ask ${role} about your project...`}
                   className="flex-1 bg-[#0B0B19] border border-amber-500/30 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none text-white placeholder-gray-500"
                   rows={1}
                   style={{ minHeight: "44px", maxHeight: "120px" }}
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={!input.trim() || loading}
+                  disabled={!input.trim() || isSendingMessage}
                   className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white p-3 rounded-xl disabled:opacity-50 transition-colors"
                 >
                   <Send size={20} />
                 </button>
               </div>
               <p className="text-xs text-amber-500/70 mt-2 text-center">
-                ProxyForce AI • {theme.title} • {tierTitle} • {experience} years experience
+                ProxyForce AI • {role} • {tier} • {role.experience} years experience
               </p>
             </div>
           </div>
@@ -1655,7 +1683,7 @@ const ProjectDashboardPage = () => {
                   className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                 >
                   <option value="">Select team member</option>
-                  {project.teamMembers.map((member) => (
+                  {project.teamMembers?.map((member) => (
                     <option key={member.id} value={member.name}>
                       {member.name}
                     </option>
@@ -1706,8 +1734,10 @@ const ProjectDashboardPage = () => {
               </button>
               <button
                 onClick={handleTaskSubmit}
-                className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white px-4 py-2 rounded-lg"
+                disabled={isSubmittingTask}
+                className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white px-4 py-2 rounded-lg flex items-center"
               >
+                {isSubmittingTask ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : null}
                 Create Task
               </button>
             </div>
@@ -1784,11 +1814,18 @@ const ProjectDashboardPage = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Email Content</label>
-                <textarea
-                  value={emailTemplate.content}
-                  onChange={(e) => setEmailTemplate({ ...emailTemplate, content: e.target.value })}
-                  className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 min-h-[200px] font-mono text-sm"
-                />
+                <div className="relative">
+                  {isGeneratingEmail && (
+                    <div className="absolute inset-0 bg-[#0B0B19]/70 flex items-center justify-center rounded-lg">
+                      <Loader className="h-8 w-8 text-amber-500 animate-spin" />
+                    </div>
+                  )}
+                  <textarea
+                    value={emailTemplate.content}
+                    onChange={(e) => setEmailTemplate({ ...emailTemplate, content: e.target.value })}
+                    className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 min-h-[200px] font-mono text-sm"
+                  />
+                </div>
               </div>
             </div>
 
@@ -1801,6 +1838,7 @@ const ProjectDashboardPage = () => {
               </button>
               <button
                 onClick={generateEmail}
+                disabled={isGeneratingEmail}
                 className="bg-[#0B0B19] hover:bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center"
               >
                 <FileText className="h-4 w-4 mr-2" />
@@ -1808,9 +1846,10 @@ const ProjectDashboardPage = () => {
               </button>
               <button
                 onClick={handleSendEmail}
+                disabled={isSendingEmail || isGeneratingEmail}
                 className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white px-4 py-2 rounded-lg flex items-center"
               >
-                <Mail className="h-4 w-4 mr-2" />
+                {isSendingEmail ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
                 Send Email
               </button>
             </div>

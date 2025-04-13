@@ -1,7 +1,7 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { ArrowLeft, Plus, Folder, Clock, Users, ArrowRight, Search } from "lucide-react"
+import { ArrowLeft, Plus, Folder, Clock, Users, ArrowRight } from "lucide-react"
 
 const ProjectsPage = () => {
   const navigate = useNavigate()
@@ -10,85 +10,59 @@ const ProjectsPage = () => {
   const role = queryParams.get("role") || "pm"
   const tier = queryParams.get("tier") || "1"
 
-  // Sample projects - in a real app, these would come from an API or database
-  const [projects, setProjects] = useState([
-    {
-      id: "proj-1",
-      name: "Website Redesign",
-      description: "Complete overhaul of company website with new branding",
-      progress: 65,
-      deadline: "2023-12-15",
-      teamSize: 4,
-      status: "In Progress",
-    },
-    {
-      id: "proj-2",
-      name: "Mobile App Development",
-      description: "Creating a new customer-facing mobile application",
-      progress: 30,
-      deadline: "2024-02-28",
-      teamSize: 6,
-      status: "In Progress",
-    },
-  ])
+  const [projects, setProjects] = useState([])
+  const [roleTheme, setRoleTheme] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [tierInfo, setTierInfo] = useState({
+    experience: "",
+    title: ""
+  })
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Simulate loading state
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
+    const fetchRoleTheme = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/roles/${role}/theme`)
+        const data = await response.json()
+        setRoleTheme(data)
+      } catch (err) {
+        setError("Failed to load role theme")
+        console.error("Error fetching role theme:", err)
+      }
+    }
 
-    return () => clearTimeout(timer)
-  }, [])
+    const fetchTierInfo = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/tiers/${tier}`)
+        const data = await response.json()
+        setTierInfo({
+          experience: data.years,
+          title: data.title
+        })
+      } catch (err) {
+        setError("Failed to load tier information")
+        console.error("Error fetching tier info:", err)
+      }
+    }
 
-  const roleThemes = {
-    pm: {
-      color: "#3B82F6", // blue
-      gradient: "from-blue-900 to-blue-700",
-      light: "bg-blue-400",
-      name: "Project Manager",
-      glow: "bg-blue-600",
-      title: "Project Manager",
-    },
-    sales: {
-      color: "#EF4444", // red
-      gradient: "from-red-900 to-red-700",
-      light: "bg-red-400",
-      name: "Sales Executive",
-      glow: "bg-red-600",
-      title: "Sales Executive",
-    },
-    marketing: {
-      color: "#22C55E", // green
-      gradient: "from-green-900 to-green-700",
-      light: "bg-green-400",
-      name: "Marketing Analyst",
-      glow: "bg-green-600",
-      title: "Marketing Analyst",
-    },
-  }
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/projects')
+        const data = await response.json()
+        setProjects(data)
+      } catch (err) {
+        setError("Failed to load projects")
+        console.error("Error fetching projects:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const roleTheme = roleThemes[role] || roleThemes.pm
-
-  // Convert tier to years of experience and title
-  const tierToYears = {
-    1: "2",
-    2: "5",
-    3: "10",
-  }
-  const tierToTitle = {
-    1: "Apprentice",
-    2: "Adept",
-    3: "Master",
-  }
-  const experience = tierToYears[tier] || "2"
-  const tierTitle = tierToTitle[tier] || "Apprentice"
+    Promise.all([fetchRoleTheme(), fetchTierInfo(), fetchProjects()])
+  }, [role, tier])
 
   const handleCreateProject = () => {
-    navigate(`/new-project?role=${role}&tier=${tier}`)
+    navigate("/new-project")
   }
 
   const handleSelectProject = (projectId) => {
@@ -99,12 +73,21 @@ const ProjectsPage = () => {
     navigate(`/experience?role=${role}`)
   }
 
-  // Filter projects based on search term
-  const filteredProjects = projects.filter(
-    (project) =>
-      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0B0B19] text-white flex items-center justify-center">
+        <div className="text-amber-500">Loading...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#0B0B19] text-white flex items-center justify-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#0B0B19] text-white overflow-hidden">
@@ -150,67 +133,22 @@ const ProjectsPage = () => {
               <h1 className="text-3xl font-bold">Your Projects</h1>
             </div>
             <p className="text-gray-400">
-              Select an existing project or create a new one to add your {tierTitle} {roleTheme.title}
+              Select an existing project or create a new one to add your {tierInfo.title} {roleTheme.title}
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0 w-full md:w-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-[#151528]/80 border border-amber-500/20 rounded-full py-2 pl-10 pr-4 w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              />
-            </div>
-
-            <button
-              onClick={handleCreateProject}
-              className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 px-6 py-3 rounded-full font-medium transition-all duration-300 shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 flex items-center justify-center"
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              Create New Project
-            </button>
-          </div>
+          <button
+            onClick={handleCreateProject}
+            className="mt-4 md:mt-0 bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 px-6 py-3 rounded-full font-medium transition-all duration-300 shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 flex items-center"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Create New Project
+          </button>
         </div>
 
-        {isLoading ? (
-          // Loading skeleton
+        {projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="bg-[#151528]/80 backdrop-blur-sm rounded-xl shadow-xl border border-amber-500/10 p-6 animate-pulse"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center">
-                    <div className="bg-gray-700 w-10 h-10 rounded-lg mr-3"></div>
-                    <div className="h-6 bg-gray-700 rounded w-40"></div>
-                  </div>
-                  <div className="bg-gray-700 h-6 w-24 rounded-full"></div>
-                </div>
-                <div className="h-4 bg-gray-700 rounded w-full mb-6"></div>
-                <div className="mb-4">
-                  <div className="flex justify-between mb-1">
-                    <div className="h-3 bg-gray-700 rounded w-16"></div>
-                    <div className="h-3 bg-gray-700 rounded w-8"></div>
-                  </div>
-                  <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-gray-700 w-2/3"></div>
-                  </div>
-                </div>
-                <div className="flex justify-between">
-                  <div className="h-4 bg-gray-700 rounded w-24"></div>
-                  <div className="h-4 bg-gray-700 rounded w-24"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : filteredProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredProjects.map((project) => (
+            {projects.map((project) => (
               <div
                 key={project.id}
                 onClick={() => handleSelectProject(project.id)}
@@ -284,29 +222,16 @@ const ProjectsPage = () => {
           </div>
         ) : (
           <div className="bg-[#151528]/50 backdrop-blur-sm rounded-xl p-10 border border-amber-500/20 text-center">
-            {searchTerm ? (
-              <>
-                <Search className="h-16 w-16 text-amber-500/50 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">No Projects Found</h3>
-                <p className="text-gray-400 mb-6">No projects match your search criteria</p>
-                <button onClick={() => setSearchTerm("")} className="text-amber-500 hover:text-amber-400 underline">
-                  Clear search
-                </button>
-              </>
-            ) : (
-              <>
-                <Folder className="h-16 w-16 text-amber-500/50 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">No Projects Yet</h3>
-                <p className="text-gray-400 mb-6">Create your first project to add your AI teammate</p>
-                <button
-                  onClick={handleCreateProject}
-                  className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 px-6 py-3 rounded-full font-medium transition-all duration-300 shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 flex items-center mx-auto"
-                >
-                  <Plus className="mr-2 h-5 w-5" />
-                  Create New Project
-                </button>
-              </>
-            )}
+            <Folder className="h-16 w-16 text-amber-500/50 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">No Projects Yet</h3>
+            <p className="text-gray-400 mb-6">Create your first project to add your AI teammate</p>
+            <button
+              onClick={handleCreateProject}
+              className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 px-6 py-3 rounded-full font-medium transition-all duration-300 shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 flex items-center mx-auto"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Create New Project
+            </button>
           </div>
         )}
       </div>

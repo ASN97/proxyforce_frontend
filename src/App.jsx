@@ -2,8 +2,11 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import LandingPage from "./pages/LandingPage"
 import RoleSelect from "./pages/RoleSelect"
 import ExperienceSelect from "./pages/ExperienceSelect"
-import Project from "./pages/Project"
-import ProjectCreate from "./Pages/ProjectCreate"
+import ChatPage from "./pages/ChatPage" // Fixed casing in import path
+import ProjectsPage from "./pages/ProjectsPage"
+import NewProjectPage from "./pages/NewProjectPage"
+import ProjectSuccessPage from "./pages/ProjectSuccessPage"
+import ProjectDashboardPage from "./pages/ProjectDashboardPage"
 
 function App() {
   return (
@@ -12,8 +15,11 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/roles" element={<RoleSelect />} />
         <Route path="/experience" element={<ExperienceSelect />} />
-        <Route path="/projects" element={<Project />} />
-        <Route path="/project/create" element={<ProjectCreate />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/new-project" element={<NewProjectPage />} />
+        <Route path="/project-success" element={<ProjectSuccessPage />} />
+        <Route path="/project/:projectId" element={<ProjectDashboardPage />} />
       </Routes>
     </Router>
   )

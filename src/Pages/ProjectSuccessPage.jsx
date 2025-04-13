@@ -44,12 +44,12 @@ const ProjectSuccessPage = () => {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
       return () => clearTimeout(timer)
     } else {
-      navigate(`/project/new-project?role=${role}&tier=${tier}`)
+      navigate(`/projects?role=${role}&tier=${tier}`)
     }
   }, [countdown, navigate, role, tier])
 
   const handleContinue = () => {
-    navigate(`/project/new-project?role=${role}&tier=${tier}`)
+    navigate(`/projects?role=${role}&tier=${tier}`)
   }
 
   return (

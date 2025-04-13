@@ -115,7 +115,7 @@ const ProjectCreateSinglePage = () => {
       const result = await res.json();
 
       if (result.status === "ok") {
-        navigate(`/project-success?role=${role}&tier=${tier}`);
+        navigate("/projects");
       } else {
         alert("Something went wrong!");
       }

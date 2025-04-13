@@ -1,5 +1,6 @@
 // Base API URL - replace with your actual backend URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
+
 
 // Helper function for making API requests
 async function fetchAPI(endpoint, options = {}) {
@@ -126,7 +127,7 @@ export const chatAPI = {
   },
 
   sendProjectMessage: async (projectId, message) => {
-    return fetchAPI(`/projects/${projectId}/chat`, {
+    return fetchAPI(`http://localhost:8000/projects/${projectId}/chat`, {
       method: "POST",
       body: JSON.stringify({ message }),
     })

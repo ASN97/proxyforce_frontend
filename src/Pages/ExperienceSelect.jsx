@@ -56,10 +56,9 @@ const ExperienceSelect = () => {
   const queryParams = new URLSearchParams(location.search)
   const role = queryParams.get("role") || "pm"
   const roleTheme = roleThemes[role] || roleThemes.pm
-
   const handleSelect = (tier) => {
-    navigate(`/chat?role=${role}&tier=${tier}`)
-  }
+    navigate(`/projects?role=${role}&tier=${tier}`)
+    }
 
   const goBack = () => {
     navigate("/roles")
