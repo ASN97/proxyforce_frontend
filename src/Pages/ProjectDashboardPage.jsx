@@ -1,4 +1,3 @@
-// ProjectDashboard.jsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -6,6 +5,7 @@ import { useParams, useLocation } from "react-router-dom"
 import ChatSection from "./components/Dashboard/ChatSection"
 import TaskSection from "./components/Dashboard/TaskSection"
 import TimelineSection from "./components/Dashboard/TimelineSection"
+import SalesDashboard from "./components/Dashboard/SalesDashboard"  // Import the SalesDashboard
 
 const ProjectDashboard = () => {
   const { projectId } = useParams()
@@ -35,11 +35,38 @@ const ProjectDashboard = () => {
   if (isLoading) return <div className="text-white p-6">Loading project...</div>
   if (!project) return <div className="text-white p-6">Project not found</div>
 
+  // If role is 'sales', render the SalesDashboard
+  if (role === "sales") {
+    return (
+      <div className="min-h-screen bg-[#0B0B19] text-white p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left: Chat */}
+        <div className="bg-[#151528]/80 p-4 rounded-xl border border-amber-500/20 h-[calc(100vh-48px)] overflow-hidden">
+          <ChatSection 
+            projectId={projectId} 
+            role={role} 
+            tier={tier} 
+            initialMessages={project.chat_history || []} 
+          />
+        </div>
+
+        {/* Right: Sales Dashboard */}
+        <div className="flex flex-col gap-4 h-[calc(100vh-48px)]">
+          <SalesDashboard projectId={projectId} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#0B0B19] text-white p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Left: Chat */}
       <div className="bg-[#151528]/80 p-4 rounded-xl border border-amber-500/20 h-[calc(100vh-48px)] overflow-hidden">
-        <ChatSection projectId={projectId} role={role} tier={tier} initialMessages={project.chat_history || []} />
+        <ChatSection 
+          projectId={projectId} 
+          role={role} 
+          tier={tier} 
+          initialMessages={project.chat_history || []} 
+        />
       </div>
 
       {/* Right: Top = Tasks, Bottom = Timeline */}
