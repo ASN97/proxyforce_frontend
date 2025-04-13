@@ -1,12 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import LandingPage from "./pages/LandingPage"
-import RoleSelect from "./pages/RoleSelect"
-import ExperienceSelect from "./pages/ExperienceSelect"
-import ChatPage from "./pages/ChatPage" // Fixed casing in import path
-import ProjectsPage from "./pages/ProjectsPage"
-import NewProjectPage from "./pages/NewProjectPage"
-import ProjectSuccessPage from "./pages/ProjectSuccessPage"
-import ProjectDashboardPage from "./pages/ProjectDashboardPage"
+import LandingPage from "./Pages/LandingPage"
+import RoleSelect from "./Pages/RoleSelect"
+import ExperienceSelect from "./Pages/ExperienceSelect"
+import ChatPage from "./Pages/ChatPage" // Fixed casing in import path
+import ProjectsPage from "./Pages/ProjectsPage"
+import NewProjectPage from "./Pages/NewProjectPage"
+import ProjectSuccessPage from "./Pages/ProjectSuccessPage"
+import ProjectDashboardPage from "./Pages/ProjectDashboardPage"
 
 function App() {
   return (
