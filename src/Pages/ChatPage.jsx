@@ -66,17 +66,16 @@ export default function ChatPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: input,
-          role,
-          tier
-        })
-      })
+      const botReply = mockResponse(input, role, tier)
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        content: botReply,
+        sender: "ai",
+        timestamp: new Date(),
+      },
+    ])
 
       const aiResponse = await response.json()
 
