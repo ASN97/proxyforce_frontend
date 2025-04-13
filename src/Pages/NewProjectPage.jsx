@@ -1,22 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import {
-  ArrowLeft,
-  ArrowRight,
-  Save,
-  Calendar,
-  Clock,
-  DollarSign,
-  Code,
-  Users,
-  Mail,
-  Briefcase,
-  AlertTriangle,
-  HelpCircle,
-  X,
-  Plus,
-} from "lucide-react"
+import { ArrowLeft, ArrowRight, Save, Calendar, Clock, DollarSign, Code } from "lucide-react"
 
 const NewProjectPage = () => {
   const navigate = useNavigate()
@@ -39,13 +24,7 @@ const NewProjectPage = () => {
     stakeholders: [{ name: "", email: "", role: "" }],
     techStack: "",
     buffer: "",
-    risks: [{ description: "", impact: "medium", mitigation: "" }],
-    objectives: "",
-    successCriteria: "",
   })
-
-  // Tooltip state
-  const [activeTooltip, setActiveTooltip] = useState(null)
 
   // Role-specific theming
   const roleThemes = {
@@ -149,63 +128,50 @@ const NewProjectPage = () => {
     }))
   }
 
-  const handleRiskChange = (index, field, value) => {
-    const updatedRisks = [...formData.risks]
-    updatedRisks[index] = {
-      ...updatedRisks[index],
-      [field]: value,
-    }
-    setFormData((prev) => ({
-      ...prev,
-      risks: updatedRisks,
-    }))
-  }
-
-  const addRisk = () => {
-    setFormData((prev) => ({
-      ...prev,
-      risks: [...prev.risks, { description: "", impact: "medium", mitigation: "" }],
-    }))
-  }
-
-  const removeRisk = (index) => {
-    const updatedRisks = [...formData.risks]
-    updatedRisks.splice(index, 1)
-    setFormData((prev) => ({
-      ...prev,
-      risks: updatedRisks,
-    }))
-  }
-
   const nextStep = () => {
     setStep(step + 1)
-    window.scrollTo(0, 0)
   }
 
   const prevStep = () => {
     setStep(step - 1)
-    window.scrollTo(0, 0)
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // In a real app, you would send this data to your backend
-    console.log("Project data:", formData)
-
-    // Navigate to a success page or project dashboard
-    navigate(`/project-success?role=${role}&tier=${tier}`)
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    // Transform frontend camelCase to backend snake_case
+    const payload = {
+      ...formData,
+      team_members: formData.teamMembers,
+      additional_info: {
+        objectives: formData.objectives || "",
+        successCriteria: formData.successCriteria || ""
+      }
+    };
+  
+    delete payload.teamMembers; // Clean up
+  
+    try {
+      const res = await fetch("http://localhost:8000/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+  
+      if (!res.ok) throw new Error("Failed to create project");
+  
+      const result = await res.json();
+      console.log("Created project:", result);
+      navigate(`/project-success`);
+    } catch (err) {
+      console.error("Error submitting project:", err);
+    }
+  };
 
   const goBack = () => {
     navigate(`/projects?role=${role}&tier=${tier}`)
-  }
-
-  const showTooltip = (id) => {
-    setActiveTooltip(id)
-  }
-
-  const hideTooltip = () => {
-    setActiveTooltip(null)
   }
 
   // Render form steps
@@ -239,74 +205,6 @@ const NewProjectPage = () => {
                   className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 min-h-[100px]"
                   placeholder="Describe your project goals and objectives"
                   required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Project Objectives
-                  <button
-                    className="ml-2 text-amber-500/70 hover:text-amber-500"
-                    onMouseEnter={() => showTooltip("objectives")}
-                    onMouseLeave={hideTooltip}
-                  >
-                    <HelpCircle size={16} />
-                  </button>
-                </label>
-                {activeTooltip === "objectives" && (
-                  <div className="absolute bg-[#151528] border border-amber-500/30 rounded-lg p-3 shadow-lg max-w-xs z-10">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-medium text-amber-500">Project Objectives</span>
-                      <button onClick={hideTooltip} className="text-gray-400 hover:text-white">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-300">
-                      Clearly define what the project aims to achieve. Specific, measurable objectives help your AI
-                      Project Manager track progress effectively.
-                    </p>
-                  </div>
-                )}
-                <textarea
-                  name="objectives"
-                  value={formData.objectives}
-                  onChange={handleChange}
-                  className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 min-h-[80px]"
-                  placeholder="List specific, measurable objectives for this project"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Success Criteria
-                  <button
-                    className="ml-2 text-amber-500/70 hover:text-amber-500"
-                    onMouseEnter={() => showTooltip("success")}
-                    onMouseLeave={hideTooltip}
-                  >
-                    <HelpCircle size={16} />
-                  </button>
-                </label>
-                {activeTooltip === "success" && (
-                  <div className="absolute bg-[#151528] border border-amber-500/30 rounded-lg p-3 shadow-lg max-w-xs z-10">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-medium text-amber-500">Success Criteria</span>
-                      <button onClick={hideTooltip} className="text-gray-400 hover:text-white">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-300">
-                      Define how success will be measured. These criteria will help your AI Project Manager determine
-                      when project goals have been achieved.
-                    </p>
-                  </div>
-                )}
-                <textarea
-                  name="successCriteria"
-                  value={formData.successCriteria}
-                  onChange={handleChange}
-                  className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 min-h-[80px]"
-                  placeholder="Define how project success will be measured"
                 />
               </div>
 
@@ -364,18 +262,11 @@ const NewProjectPage = () => {
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold mb-6 text-amber-400">Team Members</h2>
-            <p className="text-gray-400 mb-4">
-              Add team members who will be working on this project. Your AI {roleTheme.title} will use this information
-              to assign tasks and manage workloads.
-            </p>
 
             {formData.teamMembers.map((member, index) => (
               <div key={index} className="bg-[#0B0B19]/50 rounded-lg p-4 border border-amber-500/20 mb-4">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium flex items-center">
-                    <Users className="h-4 w-4 text-amber-500 mr-2" />
-                    Team Member {index + 1}
-                  </h3>
+                  <h3 className="font-medium">Team Member {index + 1}</h3>
                   {formData.teamMembers.length > 1 && (
                     <button
                       type="button"
@@ -401,44 +292,18 @@ const NewProjectPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500 h-5 w-5" />
-                      <input
-                        type="email"
-                        value={member.email}
-                        onChange={(e) => handleTeamMemberChange(index, "email", e.target.value)}
-                        className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                        placeholder="email@example.com"
-                      />
-                    </div>
+                    <input
+                      type="email"
+                      value={member.email}
+                      onChange={(e) => handleTeamMemberChange(index, "email", e.target.value)}
+                      className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      placeholder="email@example.com"
+                    />
                   </div>
                 </div>
 
                 <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Skills
-                    <button
-                      className="ml-2 text-amber-500/70 hover:text-amber-500"
-                      onMouseEnter={() => showTooltip(`skills-${index}`)}
-                      onMouseLeave={hideTooltip}
-                    >
-                      <HelpCircle size={16} />
-                    </button>
-                  </label>
-                  {activeTooltip === `skills-${index}` && (
-                    <div className="absolute bg-[#151528] border border-amber-500/30 rounded-lg p-3 shadow-lg max-w-xs z-10">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-medium text-amber-500">Team Member Skills</span>
-                        <button onClick={hideTooltip} className="text-gray-400 hover:text-white">
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-300">
-                        List specific skills this team member possesses. Your AI Project Manager will use this to assign
-                        appropriate tasks. Separate multiple skills with commas.
-                      </p>
-                    </div>
-                  )}
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Skills</label>
                   <input
                     type="text"
                     value={member.skills}
@@ -451,30 +316,24 @@ const NewProjectPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Hours per Week</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500 h-5 w-5" />
-                      <input
-                        type="number"
-                        value={member.hoursPerWeek}
-                        onChange={(e) => handleTeamMemberChange(index, "hoursPerWeek", e.target.value)}
-                        className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                        placeholder="40"
-                      />
-                    </div>
+                    <input
+                      type="number"
+                      value={member.hoursPerWeek}
+                      onChange={(e) => handleTeamMemberChange(index, "hoursPerWeek", e.target.value)}
+                      className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      placeholder="40"
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Hourly Wage ($)</label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500 h-5 w-5" />
-                      <input
-                        type="number"
-                        value={member.hourlyWage}
-                        onChange={(e) => handleTeamMemberChange(index, "hourlyWage", e.target.value)}
-                        className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                        placeholder="25"
-                      />
-                    </div>
+                    <input
+                      type="number"
+                      value={member.hourlyWage}
+                      onChange={(e) => handleTeamMemberChange(index, "hourlyWage", e.target.value)}
+                      className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      placeholder="25"
+                    />
                   </div>
                 </div>
               </div>
@@ -483,10 +342,9 @@ const NewProjectPage = () => {
             <button
               type="button"
               onClick={addTeamMember}
-              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 py-2 px-4 rounded-lg border border-amber-500/30 transition-colors w-full flex items-center justify-center"
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 py-2 px-4 rounded-lg border border-amber-500/30 transition-colors w-full"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Another Team Member
+              + Add Another Team Member
             </button>
           </div>
         )
@@ -495,18 +353,11 @@ const NewProjectPage = () => {
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold mb-6 text-amber-400">Stakeholders</h2>
-            <p className="text-gray-400 mb-4">
-              Add key stakeholders involved in this project. Your AI {roleTheme.title} will keep them informed about
-              project progress.
-            </p>
 
             {formData.stakeholders.map((stakeholder, index) => (
               <div key={index} className="bg-[#0B0B19]/50 rounded-lg p-4 border border-amber-500/20 mb-4">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium flex items-center">
-                    <Briefcase className="h-4 w-4 text-amber-500 mr-2" />
-                    Stakeholder {index + 1}
-                  </h3>
+                  <h3 className="font-medium">Stakeholder {index + 1}</h3>
                   {formData.stakeholders.length > 1 && (
                     <button
                       type="button"
@@ -532,16 +383,13 @@ const NewProjectPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500 h-5 w-5" />
-                      <input
-                        type="email"
-                        value={stakeholder.email}
-                        onChange={(e) => handleStakeholderChange(index, "email", e.target.value)}
-                        className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                        placeholder="email@example.com"
-                      />
-                    </div>
+                    <input
+                      type="email"
+                      value={stakeholder.email}
+                      onChange={(e) => handleStakeholderChange(index, "email", e.target.value)}
+                      className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      placeholder="email@example.com"
+                    />
                   </div>
                 </div>
 
@@ -561,10 +409,9 @@ const NewProjectPage = () => {
             <button
               type="button"
               onClick={addStakeholder}
-              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 py-2 px-4 rounded-lg border border-amber-500/30 transition-colors w-full flex items-center justify-center"
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 py-2 px-4 rounded-lg border border-amber-500/30 transition-colors w-full"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Another Stakeholder
+              + Add Another Stakeholder
             </button>
           </div>
         )
@@ -607,30 +454,7 @@ const NewProjectPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Buffer (days)
-                <button
-                  className="ml-2 text-amber-500/70 hover:text-amber-500"
-                  onMouseEnter={() => showTooltip("buffer")}
-                  onMouseLeave={hideTooltip}
-                >
-                  <HelpCircle size={16} />
-                </button>
-              </label>
-              {activeTooltip === "buffer" && (
-                <div className="absolute bg-[#151528] border border-amber-500/30 rounded-lg p-3 shadow-lg max-w-xs z-10">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-amber-500">Time Buffer</span>
-                    <button onClick={hideTooltip} className="text-gray-400 hover:text-white">
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-300">
-                    Additional days added to the project timeline to account for unexpected delays. Your AI Project
-                    Manager will factor this into planning.
-                  </p>
-                </div>
-              )}
+              <label className="block text-sm font-medium text-gray-300 mb-1">Buffer (days)</label>
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500 h-5 w-5" />
                 <input
@@ -657,83 +481,6 @@ const NewProjectPage = () => {
                   placeholder="e.g. React, Node.js, MongoDB"
                 />
               </div>
-            </div>
-
-            <div className="pt-4">
-              <h3 className="text-lg font-medium text-amber-400 mb-3 flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                Risk Assessment
-              </h3>
-              <p className="text-gray-400 mb-4 text-sm">
-                Identify potential risks that could impact your project. Your AI {roleTheme.title} will monitor these
-                and suggest mitigation strategies.
-              </p>
-
-              {formData.risks.map((risk, index) => (
-                <div key={index} className="bg-[#0B0B19]/50 rounded-lg p-4 border border-amber-500/20 mb-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-medium flex items-center">
-                      <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
-                      Risk {index + 1}
-                    </h3>
-                    {formData.risks.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeRisk(index)}
-                        className="text-red-400 hover:text-red-300 text-sm"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-                    <input
-                      type="text"
-                      value={risk.description}
-                      onChange={(e) => handleRiskChange(index, "description", e.target.value)}
-                      className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                      placeholder="Describe the potential risk"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Impact Level</label>
-                      <select
-                        value={risk.impact}
-                        onChange={(e) => handleRiskChange(index, "impact", e.target.value)}
-                        className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Mitigation Strategy</label>
-                      <input
-                        type="text"
-                        value={risk.mitigation}
-                        onChange={(e) => handleRiskChange(index, "mitigation", e.target.value)}
-                        className="w-full bg-[#0B0B19] border border-amber-500/30 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                        placeholder="How to mitigate this risk"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addRisk}
-                className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 py-2 px-4 rounded-lg border border-amber-500/30 transition-colors w-full flex items-center justify-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Another Risk
-              </button>
             </div>
           </div>
         )

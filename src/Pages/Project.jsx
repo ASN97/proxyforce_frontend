@@ -12,19 +12,18 @@ const ProjectPage = () => {
         const res = await fetch("http://localhost:8000/projects/all");
         if (!res.ok) throw new Error("Failed to fetch projects");
         const data = await res.json();
-        //setProjects(data);
-        setProjects(Object.entries(data.projects).map(([id, p]) => ({
-          id,
-          title: p.project_name,
-          description: p.description,
-          due: p.deadline,
-          members: p.team_members?.length || 0,
-          progress: 40 // or compute from milestones later
-        })));
-        
+        setProjects(
+          Object.entries(data.projects).map(([id, p]) => ({
+            id,
+            title: p.project_name,
+            description: p.description,
+            due: p.deadline,
+            members: p.team_members?.length || 0,
+            progress: 40, // placeholder
+          }))
+        );
       } catch (err) {
         console.error(err);
-        // fallback: show an empty array or error message
         setProjects([]);
       }
     };
@@ -37,7 +36,7 @@ const ProjectPage = () => {
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-3xl font-bold text-white text-shadow-gold">Your Projects</h1>
           <button
-            onClick={() => navigate("/project/create")}
+            onClick={() => navigate("/projects/create")}
             className="bg-gradient-to-r from-amber-500 to-amber-700 hover:from-amber-600 hover:to-amber-800 px-6 py-2 rounded-full font-semibold shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 hover-glow"
           >
             + Create New Project
@@ -54,26 +53,36 @@ const ProjectPage = () => {
         <div className="grid md:grid-cols-2 gap-6">
           {projects.length > 0 ? (
             projects.map((project) => (
-              <div
-                key={project.id}
-                className="bg-[#151528]/80 backdrop-blur-md rounded-2xl p-6 border border-amber-500/30 shadow-xl hover:shadow-amber-900/40 transition duration-300"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-xl font-bold text-white">{project.title}</h2>
-                  <span className="text-sm text-amber-400 font-semibold">In Progress</span>
-                </div>
-                <p className="text-sm text-gray-300 mb-4">{project.description}</p>
+              <div key={project.id} className="space-y-4">
+                {/* Project Card */}
+                <div className="bg-[#151528]/80 backdrop-blur-md rounded-2xl p-6 border border-amber-500/30 shadow-xl hover:shadow-amber-900/40 transition duration-300">
+                  <div className="flex justify-between items-center mb-2">
+                    <h2 className="text-xl font-bold text-white">{project.title}</h2>
+                    <span className="text-sm text-amber-400 font-semibold">In Progress</span>
+                  </div>
+                  <p className="text-sm text-gray-300 mb-4">{project.description}</p>
 
-                <div className="w-full bg-gray-700 h-2 rounded overflow-hidden mb-2">
-                  <div
-                    className="bg-amber-500 h-full animate-slow-pulse"
-                    style={{ width: `${project.progress}%` }}
-                  ></div>
+                  <div className="w-full bg-gray-700 h-2 rounded overflow-hidden mb-2">
+                    <div
+                      className="bg-amber-500 h-full animate-slow-pulse"
+                      style={{ width: `${project.progress}%` }}
+                    ></div>
+                  </div>
+
+                  <div className="flex justify-between text-sm text-gray-400">
+                    <span>📅 Due: {project.due}</span>
+                    <span>👥 {project.members} members</span>
+                  </div>
                 </div>
 
-                <div className="flex justify-between text-sm text-gray-400">
-                  <span>📅 Due: {project.due}</span>
-                  <span>👥 {project.members} members</span>
+                {/* Add Here Button outside the card */}
+                <div className="text-center">
+                  <button
+                    className="bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-white font-semibold px-6 py-2 rounded-full shadow-md hover:shadow-lg transition duration-300"
+                    onClick={() => alert(`➕ Add logic for: ${project.title}`)}
+                  >
+                    ➕ Add Here
+                  </button>
                 </div>
               </div>
             ))

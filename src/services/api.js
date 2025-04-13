@@ -1,175 +1,90 @@
-// Base API URL - replace with your actual backend URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+// export const projectsAPI = {
+//   getProjectById: async (projectId) => {
+//     const res = await fetch(`http://localhost:8000/projects/${projectId}`);
+//     if (!res.ok) throw new Error("Project not found");
+//     return await res.json();
+//   },
+// }
 
-// Helper function for making API requests
-async function fetchAPI(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`
+// export const tasksAPI = {
+//   createTask: async (projectId, taskData) => {
+//     const res = await fetch(`http://localhost:8000/projects/${projectId}/add-task`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify(taskData),
+//     });
+//     if (!res.ok) throw new Error("Failed to create task");
+//     return await res.json();
+//   },  
+// }
 
-  const defaultHeaders = {
-    "Content-Type": "application/json",
-  }
+// export const chatAPI = {
+//   getProjectMessages: async (projectId) => {
+//     // Placeholder implementation
+//     return new Promise((resolve) => {
+//       setTimeout(() => {
+//         resolve([
+//           { id: "1", content: "Hello!", sender: "ai", timestamp: new Date() },
+//           { id: "2", content: "Hi there!", sender: "user", timestamp: new Date() },
+//         ])
+//       }, 200)
+//     })
+//   },
+//   sendProjectMessage: async (projectId, messageData) => {
+//     // Placeholder implementation
+//     return new Promise((resolve) => {
+//       setTimeout(() => {
+//         resolve({ id: Date.now().toString(), content: "Acknowledged.", sender: "ai" })
+//       }, 400)
+//     })
+//   },
+// }
 
-  const config = {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  }
+// export const riskAPI = {
+//   generateRiskReport: async (projectId) => {
+//     // Placeholder implementation
+//     return new Promise((resolve) => {
+//       setTimeout(() => {
+//         resolve({
+//           report: "Sample risk report",
+//           risks: [
+//             {
+//               description: "Risk 1",
+//               impact: "high",
+//               probability: 70,
+//               mitigation: "Mitigation 1",
+//               contingency: "Contingency 1",
+//             },
+//             {
+//               description: "Risk 2",
+//               impact: "medium",
+//               probability: 50,
+//               mitigation: "Mitigation 2",
+//               contingency: "Contingency 2",
+//             },
+//           ],
+//           completionProbability: 85,
+//         })
+//       }, 600)
+//     })
+//   },
+// }
 
-  try {
-    const response = await fetch(url, config)
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `API request failed with status ${response.status}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    console.error(`API request error: ${error.message}`)
-    throw error
-  }
-}
-
-// Projects API
-export const projectsAPI = {
-  getProjects: async () => {
-    return fetchAPI("/projects")
-  },
-
-  getProjectById: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}`)
-  },
-
-  createProject: async (projectData) => {
-    return fetchAPI("/projects", {
-      method: "POST",
-      body: JSON.stringify(projectData),
-    })
-  },
-
-  updateProject: async (projectId, projectData) => {
-    return fetchAPI(`/projects/${projectId}`, {
-      method: "PUT",
-      body: JSON.stringify(projectData),
-    })
-  },
-
-  deleteProject: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}`, {
-      method: "DELETE",
-    })
-  },
-}
-
-// Tasks API
-export const tasksAPI = {
-  getProjectTasks: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}/tasks`)
-  },
-
-  createTask: async (projectId, taskData) => {
-    return fetchAPI(`/projects/${projectId}/tasks`, {
-      method: "POST",
-      body: JSON.stringify(taskData),
-    })
-  },
-
-  updateTask: async (projectId, taskId, taskData) => {
-    return fetchAPI(`/projects/${projectId}/tasks/${taskId}`, {
-      method: "PUT",
-      body: JSON.stringify(taskData),
-    })
-  },
-
-  deleteTask: async (projectId, taskId) => {
-    return fetchAPI(`/projects/${projectId}/tasks/${taskId}`, {
-      method: "DELETE",
-    })
-  },
-}
-
-// Team Members API
-export const teamAPI = {
-  getTeamMembers: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}/team`)
-  },
-
-  addTeamMember: async (projectId, memberData) => {
-    return fetchAPI(`/projects/${projectId}/team`, {
-      method: "POST",
-      body: JSON.stringify(memberData),
-    })
-  },
-}
-
-// Chat API
-export const chatAPI = {
-  getMessages: async (role, experience) => {
-    return fetchAPI(`/chat?role=${role}&experience=${experience}`)
-  },
-
-  sendMessage: async (role, experience, message) => {
-    return fetchAPI("/chat", {
-      method: "POST",
-      body: JSON.stringify({
-        role,
-        experience,
-        message,
-      }),
-    })
-  },
-
-  getProjectMessages: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}/chat`)
-  },
-
-  sendProjectMessage: async (projectId, message) => {
-    return fetchAPI(`/projects/${projectId}/chat`, {
-      method: "POST",
-      body: JSON.stringify({ message }),
-    })
-  },
-}
-
-// Risk Analysis API
-export const riskAPI = {
-  getProjectRisks: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}/risks`)
-  },
-
-  generateRiskReport: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}/risks/report`)
-  },
-}
-
-// Email API
-export const emailAPI = {
-  generateEmailTemplate: async (projectId, templateData) => {
-    return fetchAPI(`/projects/${projectId}/email/template`, {
-      method: "POST",
-      body: JSON.stringify(templateData),
-    })
-  },
-
-  sendEmail: async (projectId, emailData) => {
-    return fetchAPI(`/projects/${projectId}/email/send`, {
-      method: "POST",
-      body: JSON.stringify(emailData),
-    })
-  },
-}
-
-// Timeline API
-export const timelineAPI = {
-  getProjectTimeline: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}/timeline`)
-  },
-
-  generateWeeklyPlan: async (projectId) => {
-    return fetchAPI(`/projects/${projectId}/timeline/weekly-plan`, {
-      method: "POST",
-    })
-  },
-}
+// export const emailAPI = {
+//   generateEmailTemplate: async (projectId, templateData) => {
+//     // Placeholder implementation
+//     return new Promise((resolve) => {
+//       setTimeout(() => {
+//         resolve({ content: "Sample email content", subject: "Sample Subject" })
+//       }, 500)
+//     })
+//   },
+//   sendEmail: async (projectId, emailTemplate) => {
+//     // Placeholder implementation
+//     return new Promise((resolve) => {
+//       setTimeout(() => {
+//         resolve({})
+//       }, 300)
+//     })
+//   },
+// }
