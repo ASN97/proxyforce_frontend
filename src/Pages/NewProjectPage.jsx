@@ -39,9 +39,6 @@ const NewProjectPage = () => {
     stakeholders: [{ name: "", email: "", role: "" }],
     techStack: "",
     buffer: "",
-    risks: [{ description: "", impact: "medium", mitigation: "" }],
-    objectives: "",
-    successCriteria: "",
   })
 
   // Tooltip state
