@@ -152,7 +152,7 @@ const NewProjectPage = () => {
     delete payload.teamMembers; // Clean up
   
     try {
-      const res = await fetch("http://localhost:8000/api/projects", {
+      const res = await fetch("http://localhost:8000/api/projects/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
