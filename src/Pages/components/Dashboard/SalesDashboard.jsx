@@ -9,7 +9,7 @@ const SalesDashboard = () => {
   const role = query.get("role") || "pm"
   const tier = query.get("tier") || "1"
 
-  const [productDescription, setProductDescription] = useState("")
+  const [productDescription, setProductDescription] = useState("")  
   const [targetClient, setTargetClient] = useState("")
   const [salesPitch, setSalesPitch] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -29,7 +29,7 @@ const SalesDashboard = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          productDescription,
+          productDescription,  
           targetClient,
         }),
       })
@@ -44,20 +44,23 @@ const SalesDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B19] text-white p-4">
+    
       <div className="bg-[#151528]/80 p-4 rounded-xl border border-amber-500/20 mb-4">
         <h3 className="text-2xl mb-4">Generate Sales Pitch</h3>
         
+
         <div className="mb-4">
           <label className="block text-sm font-semibold">Product Description</label>
           <textarea
             className="w-full p-2 mt-2 text-black bg-white"
             rows="4"
-            value={productDescription}
-            onChange={(e) => setProductDescription(e.target.value)}
+            value={productDescription}  
+            onChange={(e) => setProductDescription(e.target.value)}  
             placeholder="Describe your product."
           />
         </div>
 
+        {/* Target Client */}
         <div className="mb-4">
           <label className="block text-sm font-semibold">Target Client</label>
           <textarea
@@ -76,6 +79,7 @@ const SalesDashboard = () => {
           {isLoading ? "Generating..." : "Generate Sales Pitch"}
         </button>
 
+      
         {salesPitch && (
           <div className="mt-6">
             <h3 className="text-xl mb-2">Generated Sales Pitch</h3>
